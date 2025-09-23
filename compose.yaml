@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: otp-postgres
+    environment:
+      POSTGRES_DB: otp-db
+      POSTGRES_USER: user1
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user1 -d otp-db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:7.8
+    container_name: otp-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: damosindiarra@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: 1234
+    ports:
+      - "5051:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: otp
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+    ports:
+      - "9025:8025"  # port web modifié
+      - "2025:1025"  # SMTP pour Spring Boot, port modifié
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/otp.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+volumes:
+  postgres-data:
+  pgadmin-data:
+  otp-data:
