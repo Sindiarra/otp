@@ -1,20 +1,41 @@
 package net.ada.otp.dtos;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 import net.ada.otp.entities.User;
+import net.ada.otp.enums.Role;
 
 public class UserDTO {
-    private Long id;
-    private String firstName;
-    private String lastName;
-    private String phoneNumber;
-    private String email;
-    private boolean enabled;
-    private String role; // String pour simplicité
 
-    // --- Constructeurs ---
+    private Long id;
+
+    @NotBlank(message = "Le prénom est obligatoire")
+    private String firstName;
+
+    @NotBlank(message = "Le nom est obligatoire")
+    private String lastName;
+
+    @Size(min = 8, max = 20, message = "Le numéro de téléphone doit contenir entre 8 et 20 caractères")
+    private String phoneNumber;
+
+    @NotBlank(message = "L'email est obligatoire")
+    @Email(message = "Email invalide")
+    private String email;
+
+    private boolean enabled;
+
+    // Rôle en String avec validation
+    @NotBlank(message = "Le rôle est obligatoire")
+    @Pattern(regexp = "USER|ADMIN", message = "Rôle invalide")
+    private String role;
+
+    // --- Constructeurs, getters et setters ---
     public UserDTO() {}
 
-    public UserDTO(Long id, String firstName, String lastName, String phoneNumber, String email, boolean enabled, String role) {
+    public UserDTO(Long id, String firstName, String lastName, String phoneNumber,
+                   String email, boolean enabled, String role) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -24,23 +45,34 @@ public class UserDTO {
         this.role = role;
     }
 
-    // --- Getters ---
+    // Getters & Setters
     public Long getId() { return id; }
-    public String getFirstName() { return firstName; }
-    public String getLastName() { return lastName; }
-    public String getPhoneNumber() { return phoneNumber; }
-    public String getEmail() { return email; }
-    public boolean isEnabled() { return enabled; }
-    public String getRole() { return role; }
-
-    // --- Setters ---
     public void setId(Long id) { this.id = id; }
+    public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
+    public String getLastName() { return lastName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
+    public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+    public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    // --- Conversion DTO -> entité ---
+    public User toEntity() {
+        User user = new User();
+        user.setId(this.id);
+        user.setFirstName(this.firstName);
+        user.setLastName(this.lastName);
+        user.setPhoneNumber(this.phoneNumber);
+        user.setEmail(this.email);
+        user.setEnabled(this.enabled);
+        user.setRole(Role.valueOf(this.role)); // conversion sûre
+        return user;
+    }
 
     // --- Conversion entité -> DTO ---
     public static UserDTO fromEntity(User user) {
@@ -52,21 +84,7 @@ public class UserDTO {
                 user.getPhoneNumber(),
                 user.getEmail(),
                 user.isEnabled(),
-                user.getRole() != null ? user.getRole().name() : null
+                user.getRole().name() // stocké en String pour le front
         );
-    }
-
-    // --- Conversion DTO -> entité ---
-    public static User toEntity(UserDTO dto) {
-        if (dto == null) return null;
-        User user = new User();
-        user.setId(dto.getId());
-        user.setFirstName(dto.getFirstName());
-        user.setLastName(dto.getLastName());
-        user.setPhoneNumber(dto.getPhoneNumber());
-        user.setEmail(dto.getEmail());
-        user.setEnabled(dto.isEnabled());
-        // role doit être mappé par le service (enum parsing si nécessaire)
-        return user;
     }
 }
